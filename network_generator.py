@@ -101,10 +101,10 @@ class SPADENorm(nn.Module):
     def forward(self, x, seg, misalign_mask=None):
         # Part 1. Generate parameter-free normalized activations.
         b, c, h, w = x.size()
-        if self.param_opt.cuda :
-            noise = (torch.randn(b, w, h, 1).cuda() * self.noise_scale).transpose(1, 3)
-        else:
-            noise = (torch.randn(b, w, h, 1)* self.noise_scale).transpose(1, 3)
+        noise = torch.randn(b, w, h, 1)
+        if self.param_opt.cuda and torch.cuda.is_available():
+            noise = noise.cuda()
+        noise = (noise * self.noise_scale).transpose(1, 3)
 
 
         if misalign_mask is None:

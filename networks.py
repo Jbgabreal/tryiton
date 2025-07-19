@@ -161,10 +161,9 @@ class ConditionGenerator(nn.Module):
 def make_grid(N, iH, iW,opt):
     grid_x = torch.linspace(-1.0, 1.0, iW).view(1, 1, iW, 1).expand(N, iH, -1, -1)
     grid_y = torch.linspace(-1.0, 1.0, iH).view(1, iH, 1, 1).expand(N, -1, iW, -1)
-    if opt.cuda :
-        grid = torch.cat([grid_x, grid_y], 3).cuda()
-    else:
-        grid = torch.cat([grid_x, grid_y], 3)
+    grid = torch.cat([grid_x, grid_y], 3)
+    if opt.cuda and torch.cuda.is_available():
+        grid = grid.cuda()
     return grid
 
 
@@ -421,7 +420,7 @@ def load_checkpoint(model, checkpoint_path,opt):
         print('no checkpoint')
         raise
     log = model.load_state_dict(torch.load(checkpoint_path), strict=False)
-    if opt.cuda :
+    if opt.cuda and torch.cuda.is_available():
         model.cuda()
 
 

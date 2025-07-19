@@ -82,18 +82,18 @@ def load_checkpoint_G(model, checkpoint_path,opt):
     new_state_dict = OrderedDict([(k.replace('ace', 'alias').replace('.Spade', ''), v) for (k, v) in state_dict.items()])
     new_state_dict._metadata = OrderedDict([(k.replace('ace', 'alias').replace('.Spade', ''), v) for (k, v) in state_dict._metadata.items()])
     model.load_state_dict(new_state_dict, strict=True)
-    if opt.cuda :
+    if opt.cuda and torch.cuda.is_available():
         model.cuda()
 
 
 
 def test(opt, test_loader, tocg, generator):
     gauss = tgm.image.GaussianBlur((15, 15), (3, 3))
-    if opt.cuda:
+    if opt.cuda and torch.cuda.is_available():
         gauss = gauss.cuda()
     
     # Model
-    if opt.cuda :
+    if opt.cuda and torch.cuda.is_available():
         tocg.cuda()
     tocg.eval()
     generator.eval()
@@ -115,7 +115,7 @@ def test(opt, test_loader, tocg, generator):
     with torch.no_grad():
         for inputs in test_loader.data_loader:
 
-            if opt.cuda :
+            if opt.cuda and torch.cuda.is_available():
                 pose_map = inputs['pose'].cuda()
                 pre_clothes_mask = inputs['cloth_mask'][opt.datasetting].cuda()
                 label = inputs['parse']
@@ -125,7 +125,7 @@ def test(opt, test_loader, tocg, generator):
                 densepose = inputs['densepose'].cuda()
                 im = inputs['image']
                 input_label, input_parse_agnostic = label.cuda(), parse_agnostic.cuda()
-                pre_clothes_mask = torch.FloatTensor((pre_clothes_mask.detach().cpu().numpy() > 0.5).astype(np.float)).cuda()
+                pre_clothes_mask = torch.FloatTensor((pre_clothes_mask.detach().cpu().numpy() > 0.5).astype(float)).cuda()
             else :
                 pose_map = inputs['pose']
                 pre_clothes_mask = inputs['cloth_mask'][opt.datasetting]
@@ -136,7 +136,7 @@ def test(opt, test_loader, tocg, generator):
                 densepose = inputs['densepose']
                 im = inputs['image']
                 input_label, input_parse_agnostic = label, parse_agnostic
-                pre_clothes_mask = torch.FloatTensor((pre_clothes_mask.detach().cpu().numpy() > 0.5).astype(np.float))
+                pre_clothes_mask = torch.FloatTensor((pre_clothes_mask.detach().cpu().numpy() > 0.5).astype(float))
 
 
 
@@ -159,10 +159,10 @@ def test(opt, test_loader, tocg, generator):
             flow_list, fake_segmap, warped_cloth_paired, warped_clothmask_paired = tocg(opt,input1, input2)
             
             # warped cloth mask one hot
-            if opt.cuda :
-                warped_cm_onehot = torch.FloatTensor((warped_clothmask_paired.detach().cpu().numpy() > 0.5).astype(np.float)).cuda()
+            if opt.cuda and torch.cuda.is_available():
+                warped_cm_onehot = torch.FloatTensor((warped_clothmask_paired.detach().cpu().numpy() > 0.5).astype(float)).cuda()
             else :
-                warped_cm_onehot = torch.FloatTensor((warped_clothmask_paired.detach().cpu().numpy() > 0.5).astype(np.float))
+                warped_cm_onehot = torch.FloatTensor((warped_clothmask_paired.detach().cpu().numpy() > 0.5).astype(float))
 
             if opt.clothmask_composition != 'no_composition':
                 if opt.clothmask_composition == 'detach':
@@ -179,7 +179,7 @@ def test(opt, test_loader, tocg, generator):
             fake_parse_gauss = gauss(F.interpolate(fake_segmap, size=(opt.fine_height, opt.fine_width), mode='bilinear'))
             fake_parse = fake_parse_gauss.argmax(dim=1)[:, None]
 
-            if opt.cuda :
+            if opt.cuda and torch.cuda.is_available():
                 old_parse = torch.FloatTensor(fake_parse.size(0), 13, opt.fine_height, opt.fine_width).zero_().cuda()
             else:
                 old_parse = torch.FloatTensor(fake_parse.size(0), 13, opt.fine_height, opt.fine_width).zero_()
@@ -194,7 +194,7 @@ def test(opt, test_loader, tocg, generator):
                 5:  ['right_arm',   [6]],
                 6:  ['noise',       [12]]
             }
-            if opt.cuda :
+            if opt.cuda and torch.cuda.is_available():
                 parse = torch.FloatTensor(fake_parse.size(0), 7, opt.fine_height, opt.fine_width).zero_().cuda()
             else:
                 parse = torch.FloatTensor(fake_parse.size(0), 7, opt.fine_height, opt.fine_width).zero_()
